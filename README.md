@@ -15,7 +15,7 @@ The Atlas II robotic arm was known for its unconventional design and internal co
 To run the simulation locally on your machine, follow these steps:
 
 1. **Clone the repository**:
-git clone https://github.com/your-username/atlas-robotic-arm.git
+git clone https://github.com/diggedypomme/Atlas-II-Robotic-Arm-Simulator.git
 
 cd atlas-robotic-arm
 
