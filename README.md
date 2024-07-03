@@ -6,7 +6,7 @@ This project simulates the movements of the Atlas II robotic arm using WebGL and
 
 ## Where to Use
 
-This simulation is also available at [Diggedy Pomme's Arm11 Simulator](https://diggedypomme.com/stu/arm11.html).
+This simulation is also at [the following address](https://diggedypomme.com/stu/arm11.html).
 
 ## About
 
