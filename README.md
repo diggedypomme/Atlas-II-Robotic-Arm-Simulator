@@ -2,11 +2,9 @@
 
 This project simulates the movements of the Atlas II robotic arm using WebGL and Three.js. It aims to replicate the unique design and functionality of the Atlas II arm developed by LJ Electronics Ltd. More detailed information can be found on Neil Fazakerley's BeebControl website: http://www.riscy.uk/beebcontrol/arms/atlas/index.html.
 
+This simulation is available at [https://diggedypomme.com/atlas_arm_sim/](https://diggedypomme.com/atlas_arm_sim/).
+
 ![Demo](/images/atlas.png)
-
-## Where to Use
-
-This simulation is also at [https://diggedypomme.com/atlas_arm_sim/](https://diggedypomme.com/atlas_arm_sim/).
 
 ## About
 
