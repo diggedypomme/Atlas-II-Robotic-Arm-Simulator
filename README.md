@@ -18,9 +18,10 @@ To run the simulation locally on your machine, follow these steps:
 
 1. **Clone the repository**:
 git clone https://github.com/your-username/atlas-robotic-arm.git
+
 cd atlas-robotic-arm
 
-2. **Start a local server**:
+3. **Start a local server**:
 
 Since modern browsers restrict certain functionalities when opening HTML files locally due to security reasons, you need to start a local server to run the simulation. Use Python's built-in HTTP server for this purpose:
 python -m http.server
