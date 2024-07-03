@@ -44,11 +44,11 @@ Open your web browser and navigate to `http://localhost:8000/` (or another port 
 
 The following commands can be used to control the robotic arm:
 
-- **A0 to A100**: Rotate base (pan) from 0 to 100 degrees.
-- **B0 to B100**: Tilt head from 0 to 100 degrees.
+- **A0 to A100**: Rotate base (pan) from 0 to 100 arbitrary units (mapped to the min max for each axis).
+- **B0 to B100**: Tilt head from 0 to 100 units.
 - **C0 to C100**: Translate arm from 0 to 100 units.
-- **D0 to D100**: Tilt wrist from 0 to 100 degrees.
-- **E0 to E100**: Rotate hand from 0 to 100 degrees.
+- **D0 to D100**: Tilt wrist from 0 to 100 units.
+- **E0 to E100**: Rotate hand from 0 to 100 units.
 - **F0 to F100**: Translate fingers from 0 to 100 units.
 - **G0 to G100**: (Optional) Translate finger L from 0 to 100 units.
 - **H0 to H100**: (Optional) Translate finger R from 0 to 100 units.
