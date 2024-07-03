@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Atlas 2 robot arm simulator by Diggedypomme</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+    canvas {
+      display: block;
+    }
+    #controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .command-button {
+      display: inline-block;
+      margin: 2px;
+      padding: 5px 10px;
+      background-color: #ccc;
+      border: none;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    .command-button:hover {
+      background-color: #bbb;
+    }
+
+    #commandBox {
+      position: fixed;
+      top: 10px;
+      right: -300px;
+      width: 280px;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 10px;
+      border-radius: 5px;
+      transition: right 0.3s ease;
+    }
+    #commandBox.active {
+      right: 10px;
+    }
+    #commandBox textarea {
+      width: 100%;
+      height: 200px;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+    #toggleCommandBox {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #ccc;
+      border: none;
+      cursor: pointer;
+      border-radius: 3px;
+      padding: 5px 10px;
+    }
+
+    /* Text at bottom right */
+    #bottomRightText {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      font-size: 23px;
+      color: #black;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+</head>
+<body>
+  <div id="controls">
+    <input type="text" id="commandInputSingle" placeholder="Enter command">
+    <button onclick="executeCommand()">OK</button>
+    <br>
+    <button class="command-button" onclick="fillAndSubmit('A0')">A0</button>
+    <button class="command-button" onclick="fillAndSubmit('A50')">A50</button>
+    <button class="command-button" onclick="fillAndSubmit('A100')">A100</button>
+    <button class="command-button" onclick="fillAndSubmit('B0')">B0</button>
+    <button class="command-button" onclick="fillAndSubmit('B50')">B50</button>
+    <button class="command-button" onclick="fillAndSubmit('B100')">B100</button>
+    <button class="command-button" onclick="fillAndSubmit('C0')">C0</button>
+    <button class="command-button" onclick="fillAndSubmit('C50')">C50</button>
+    <button class="command-button" onclick="fillAndSubmit('C100')">C100</button>
+    <button class="command-button" onclick="fillAndSubmit('D0')">D0</button>
+    <button class="command-button" onclick="fillAndSubmit('D50')">D50</button>
+    <button class="command-button" onclick="fillAndSubmit('D100')">D100</button>
+    <button class="command-button" onclick="fillAndSubmit('E0')">E0</button>
+    <button class="command-button" onclick="fillAndSubmit('E50')">E50</button>
+    <button class="command-button" onclick="fillAndSubmit('E100')">E100</button>
+    <button class="command-button" onclick="fillAndSubmit('F0')">F0</button>
+    <button class="command-button" onclick="fillAndSubmit('F50')">F50</button>
+    <button class="command-button" onclick="fillAndSubmit('F100')">F100</button>
+    <button class="command-button" onclick="fillAndSubmit('G0')">G0</button>
+    <button class="command-button" onclick="fillAndSubmit('G50')">G50</button>
+    <button class="command-button" onclick="fillAndSubmit('G100')">G100</button>
+    <button class="command-button" onclick="fillAndSubmit('H0')">H0</button>
+    <button class="command-button" onclick="fillAndSubmit('H50')">H50</button>
+    <button class="command-button" onclick="fillAndSubmit('H100')">H100</button>
+  </div>
+
+  <div id="commandBox">
+    <textarea id="commandInputMulti" placeholder="Enter commands sequentially, one per line">
+A75
+B0
+C100
+D75
+E50
+F100
+delay(4000)
+A25
+B100
+C0
+D0
+E0
+F0
+delay(3000)
+E50
+F50
+D50
+
+</textarea>
+    <button onclick="executeCommands()">Run Commands</button>
+  </div>
+
+  <!-- Text at bottom right -->
+  <div id="bottomRightText">
+    Simulator for Atlas II robotic arm by LJ Electronics Ltd. by Superpomme
+  </div>
+
+  <button id="toggleCommandBox" onclick="toggleCommandBox()">Show/Hide Command Box</button>
+  <script>
+    // Setup the scene
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(10, window.innerWidth / window.innerHeight, 0.5, 11);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Add OrbitControls
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+    // Add gradient background
+    const gradientCanvas = document.createElement('canvas');
+    gradientCanvas.width = 32;
+    gradientCanvas.height = window.innerHeight;
+    const gradientContext = gradientCanvas.getContext('2d');
+    const gradient = gradientContext.createLinearGradient(0, 0, 0, gradientCanvas.height);
+    gradient.addColorStop(0, '#ADFFFF'); // Blue
+    gradient.addColorStop(1, '#008788'); // light green
+    gradientContext.fillStyle = gradient;
+    gradientContext.fillRect(0, 0, gradientCanvas.width, gradientCanvas.height);
+
+    const gradientTexture = new THREE.CanvasTexture(gradientCanvas);
+    scene.background = gradientTexture;
+
+    // Add lights
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(5, 10, 7.5).normalize();
+    scene.add(directionalLight);
+
+
+
+// Load GLTF models
+const loader = new THREE.GLTFLoader();
+let base, neck, head, arm, wrist, hand, fingerL, fingerR;
+
+loader.load('arm3_table_origin.glb', function(gltf) {
+  const table = gltf.scene;
+  scene.add(table);
+
+  loader.load('arm3_base_origin.glb', function(gltf) {
+    base = gltf.scene;
+    base.position.set(0, 0, 0);
+    table.add(base);
+
+    loader.load('arm3_neck_origin.glb', function(gltf) {
+      neck = gltf.scene;
+      neck.position.set(0, 0.065, 0);  // Adjust based on your model
+      base.add(neck);
+
+      loader.load('arm3_head_origin.glb', function(gltf) {
+        head = gltf.scene;
+        head.position.set(0, 0.105, 0);  // Adjust based on your model
+        neck.add(head);
+
+   
+
+        loader.load('arm3_arm_origin.glb', function(gltf) {
+          arm = gltf.scene;
+          arm.position.set(0, 0, 0);  // Adjust based on your model
+          head.add(arm);
+
+          loader.load('arm3_wrist_origin.glb', function(gltf) {
+            wrist = gltf.scene;
+            wrist.position.set(0.0, 0, -0.18);  // Adjust based on your model
+            arm.add(wrist);
+
+            loader.load('arm3_palm_origin.glb', function(gltf) {
+              hand = gltf.scene;
+              hand.position.set(0, 0, -0.026);  // Adjust based on your model
+              wrist.add(hand);
+
+              loader.load('arm3_finger_l_origin.glb', function(gltf) {
+                fingerL = gltf.scene;
+                fingerL.position.set(0.0, 0, -0.01);  // Adjust based on your model
+                hand.add(fingerL);
+
+                loader.load('arm3_finger_r_origin.glb', function(gltf) {
+                  fingerR = gltf.scene;
+                  fingerR.position.set(0.0, 0, -0.01);  // Adjust based on your model
+                  hand.add(fingerR);
+
+                  // Set the camera position after loading all models
+                  camera.position.set(2.7, 2.7, 2.7);
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+});
+
+
+function createPivotPointMarker() {
+  const geometry = new THREE.SphereGeometry(0.02); // Adjust size as needed
+  const material = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red color for visibility
+  return new THREE.Mesh(geometry, material);
+}    let targetBaseRotationZ = 0;
+    let targetNeckRotation = 0;
+    let targetHeadRotationX = 0;
+    let targetArmTranslationY = 0;
+    let targetWristRotationX = 0;
+    let targetHandRotationZ = 0;
+    let targetFingerLTranslationX = 0;
+    let targetFingerRTranslationX = 0;
+
+    const rotationSpeed = 0.01; // Adjust speed as needed
+    const translationSpeed = 0.001; // Adjust speed as needed
+
+    function updateRotation(currentRotation, targetRotation) {
+      if (Math.abs(targetRotation - currentRotation) < rotationSpeed) {
+        return targetRotation;
+      }
+      return currentRotation + Math.sign(targetRotation - currentRotation) * rotationSpeed;
+    }
+
+    function updateTranslation(currentPosition, targetPosition) {
+      if (Math.abs(targetPosition - currentPosition) < translationSpeed) {
+        return targetPosition;
+      }
+      return currentPosition + Math.sign(targetPosition - currentPosition) * translationSpeed;
+    }
+
+    function moveBasePan(newPosition) {
+      targetBaseRotationZ = newPosition * Math.PI / 180; // Convert to radians
+    }
+
+ function moveNeckTwist(newPosition) {
+  // Map the range [0, 359] to [0, 100]
+ newPosition = mapRange(newPosition, 0, 100, 1, 359);
+console.log(newPosition )
+  targetNeckRotation = newPosition * Math.PI / 180; // Convert to radians
+}
+
+function moveHeadTilt(newPosition) {
+  // Map the range [-10, 10] to [1, 100]
+  newPosition = mapRange(newPosition, 0, 100, -50, 50);
+  targetHeadRotationX = newPosition * Math.PI / 180; // Convert to radians
+}
+
+function moveArmTranslate(newPosition) {
+  // Map the range [-5, 10] to [1, 100]
+  newPosition = mapRange(newPosition, 0, 100, -6, 10);
+  targetArmTranslationY = newPosition / 100; // Convert to units
+}
+
+function moveWristTilt(newPosition) {
+  // Map the range [-10, 10] to [1, 100]
+ newPosition = mapRange(newPosition, 0, 100, -120, 120);
+  targetWristRotationX = newPosition * Math.PI / 180; // Convert to radians
+}
+
+function moveHandRotate(newPosition) {
+  // Map the range [-5, 10] to [1, 100]
+  newPosition = mapRange(newPosition, 0, 100, 90, -90);
+  targetHandRotationZ = newPosition * Math.PI / 180; // Convert to radians
+}
+
+function moveFingerLTranslate(newPosition) {
+  // Map the range [-5, 10] to [1, 100]
+  newPosition = mapRange(newPosition, 0, 100, 0, 1.5);
+  targetFingerLTranslationX = -newPosition / 100; // Convert to units
+}
+
+function moveFingerRTranslate(newPosition) {
+  // Map the range [0, 15] to [1, 100]
+  newPosition = mapRange(newPosition, 0, 100, 0, 1.5);
+  targetFingerRTranslationX = newPosition / 100; // Convert to units
+}
+
+function mapRange(value, fromMin, fromMax, toMin, toMax) {
+  // Scale the value from the input range to the output range
+  return toMin + (value - fromMin) * (toMax - toMin) / (fromMax - fromMin);
+}
+    function executeCommand() {
+      const command = document.querySelector("#commandInputSingle").value.trim().toUpperCase();
+      const joint = command.charAt(0);
+      const value = parseFloat(command.slice(1));
+
+      switch (joint) {
+        case 'A':
+          //moveBasePan(value);  //wrong
+	 moveNeckTwist(value);
+          break;
+        case 'B':
+         moveHeadTilt(value);
+          break;
+        case 'C':
+     	 moveArmTranslate(value);
+          break;
+        case 'D':
+         moveWristTilt(value);
+          break;
+        case 'E':
+          moveHandRotate(value);
+          break;
+        case 'F':
+          moveFingerLTranslate(value);
+	moveFingerRTranslate(value);
+
+          break;
+        case 'G':
+          moveFingerLTranslate(value);
+          break;
+        case 'H':
+          moveFingerRTranslate(value);
+          break;
+        default:
+          alert('Invalid command');
+      }
+    }
+
+    function fillAndSubmit(command) {
+     document.querySelector("#commandInputSingle").value = command;
+      executeCommand();
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      if (base) base.rotation.z = updateRotation(base.rotation.z, targetBaseRotationZ);
+      if (neck) neck.rotation.y = updateRotation(neck.rotation.y, targetNeckRotation);
+      if (head) head.rotation.x = updateRotation(head.rotation.x, targetHeadRotationX);
+      if (arm) arm.position.z = updateTranslation(arm.position.z, targetArmTranslationY);
+      if (wrist) wrist.rotation.x = updateRotation(wrist.rotation.x, targetWristRotationX);
+      if (hand) hand.rotation.z = updateRotation(hand.rotation.z, targetHandRotationZ);
+      if (fingerL) fingerL.position.x = updateTranslation(fingerL.position.x, targetFingerLTranslationX);
+      if (fingerR) fingerR.position.x = updateTranslation(fingerR.position.x, targetFingerRTranslationX);
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+
+
+
+    // Function to toggle command box visibility
+    function toggleCommandBox() {
+      const commandBox = document.getElementById('commandBox');
+      commandBox.classList.toggle('active');
+    }
+
+
+
+
+function executeCommands() {
+  const commandsTextArea = document.getElementById('commandInputMulti');
+  const commands = commandsTextArea.value.trim().split('\n');
+
+  let index = 0;
+
+  function executeNextCommand() {
+    if (index < commands.length) {
+      const command = commands[index].trim().toUpperCase();
+      if (command.startsWith('DELAY(') && command.endsWith(')')) {
+        const delayTime = parseInt(command.substring(6, command.length - 1));
+        setTimeout(() => {
+          index++;
+          executeNextCommand();
+        }, delayTime);
+      } else {
+        fillAndSubmit(command);
+        index++;
+        executeNextCommand();
+      }
+    }
+  }
+
+  executeNextCommand();
+}
+  </script>
+</body>
+</html>

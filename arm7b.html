@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Robot Arm Simulation</title>
+  <style>
+    body { margin: 0; }
+    canvas { display: block; }
+    #controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .command-button {
+      display: inline-block;
+      margin: 2px;
+      padding: 5px 10px;
+      background-color: #ccc;
+      border: none;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    .command-button:hover {
+      background-color: #bbb;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+</head>
+<body>
+  <div id="controls">
+    <input type="text" id="commandInput" placeholder="Enter command">
+    <button onclick="executeCommand()">OK</button>
+    <br>
+    <button class="command-button" onclick="fillAndSubmit('A100')">A100</button>
+    <button class="command-button" onclick="fillAndSubmit('A10')">A10</button>
+    <button class="command-button" onclick="fillAndSubmit('B50')">B50</button>
+    <button class="command-button" onclick="fillAndSubmit('B10')">B10</button>
+    <button class="command-button" onclick="fillAndSubmit('C100')">C100</button>
+    <button class="command-button" onclick="fillAndSubmit('C10')">C10</button>
+    <button class="command-button" onclick="fillAndSubmit('D50')">D50</button>
+    <button class="command-button" onclick="fillAndSubmit('D10')">D10</button>
+    <button class="command-button" onclick="fillAndSubmit('E100')">E100</button>
+    <button class="command-button" onclick="fillAndSubmit('E10')">E10</button>
+    <button class="command-button" onclick="fillAndSubmit('F100')">F100</button>
+    <button class="command-button" onclick="fillAndSubmit('F10')">F10</button>
+    <button class="command-button" onclick="fillAndSubmit('G50')">G50</button>
+    <button class="command-button" onclick="fillAndSubmit('G10')">G10</button>
+    <button class="command-button" onclick="fillAndSubmit('H50')">H50</button>
+    <button class="command-button" onclick="fillAndSubmit('H10')">H10</button>
+  </div>
+  <script>
+    // Setup the scene
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 30);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Add OrbitControls
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+    // Add gradient background
+    const gradientCanvas = document.createElement('canvas');
+    gradientCanvas.width = 32;
+    gradientCanvas.height = window.innerHeight;
+    const gradientContext = gradientCanvas.getContext('2d');
+    const gradient = gradientContext.createLinearGradient(0, 0, 0, gradientCanvas.height);
+    gradient.addColorStop(0, '#0000ff'); // Blue
+    gradient.addColorStop(1, '#ff00ff'); // Purple
+    gradientContext.fillStyle = gradient;
+    gradientContext.fillRect(0, 0, gradientCanvas.width, gradientCanvas.height);
+
+    const gradientTexture = new THREE.CanvasTexture(gradientCanvas);
+    scene.background = gradientTexture;
+
+    // Add lights
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(5, 10, 7.5).normalize();
+    scene.add(directionalLight);
+
+    // Load GLTF models
+    const loader = new THREE.GLTFLoader();
+    let base, neck, head, arm, wrist, hand, fingerL, fingerR;
+
+    loader.load('arm3_table.glb', function(gltf) {
+      const table = gltf.scene;
+      scene.add(table);
+
+      loader.load('arm3_base.glb', function(gltf) {
+        base = gltf.scene;
+        base.position.set(0, 0, 0);
+        table.add(base);
+
+        loader.load('arm3_neck.glb', function(gltf) {
+          neck = gltf.scene;
+          neck.position.set(0, 0, 0);  // Adjust based on your model
+          base.add(neck);
+
+          loader.load('arm3_head.glb', function(gltf) {
+            head = gltf.scene;
+            head.position.set(0, 0, 0);  // Adjust based on your model
+            neck.add(head);
+
+            loader.load('arm3_arm.glb', function(gltf) {
+              arm = gltf.scene;
+              arm.position.set(0, 0, 0);  // Adjust based on your model
+              head.add(arm);
+
+              loader.load('arm3_wrist.glb', function(gltf) {
+                wrist = gltf.scene;
+                wrist.position.set(0, 0, 0);  // Adjust based on your model
+                arm.add(wrist);
+
+                loader.load('arm3_hand.glb', function(gltf) {
+                  hand = gltf.scene;
+                  hand.position.set(0, 0, 0);  // Adjust based on your model
+                  wrist.add(hand);
+
+                  loader.load('arm3_finger_l.glb', function(gltf) {
+                    fingerL = gltf.scene;
+                    fingerL.position.set(0.0, 0, 0);  // Adjust based on your model
+                    hand.add(fingerL);
+
+                    loader.load('arm3_finger_r.glb', function(gltf) {
+                      fingerR = gltf.scene;
+                      fingerR.position.set(0.0, 0, 0);  // Adjust based on your model
+                      hand.add(fingerR);
+
+                      // Set the camera position after loading all models
+                      camera.position.z = 2;
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+
+    let targetBaseRotationZ = 0;
+    let targetNeckRotation = 0;
+    let targetHeadRotationX = 0;
+    let targetArmTranslationY = 0;
+    let targetWristRotationX = 0;
+    let targetHandRotationZ = 0;
+    let targetFingerLTranslationX = 0;
+    let targetFingerRTranslationX = 0;
+
+    const rotationSpeed = 0.01; // Adjust speed as needed
+    const translationSpeed = 0.1; // Adjust speed as needed
+
+    function updateRotation(currentRotation, targetRotation) {
+      if (Math.abs(targetRotation - currentRotation) < rotationSpeed) {
+        return targetRotation;
+      }
+      return currentRotation + Math.sign(targetRotation - currentRotation) * rotationSpeed;
+    }
+
+    function updateTranslation(currentPosition, targetPosition) {
+      if (Math.abs(targetPosition - currentPosition) < translationSpeed) {
+        return targetPosition;
+      }
+      return currentPosition + Math.sign(targetPosition - currentPosition) * translationSpeed;
+    }
+
+    function moveBasePan(newPosition) {
+      targetBaseRotationZ = newPosition * Math.PI / 180; // Convert to radians
+    }
+
+    function moveNeckTwist(newPosition) {
+      targetNeckRotation = newPosition * Math.PI / 180; // Convert to radians
+    }
+
+    function moveHeadTilt(newPosition) {
+      targetHeadRotationX = newPosition * Math.PI / 180; // Convert to radians
+    }
+
+    function moveArmTranslate(newPosition) {
+      targetArmTranslationY = newPosition / 100; // Convert to units
+    }
+
+    function moveWristTilt(newPosition) {
+      targetWristRotationX = newPosition * Math.PI / 180; // Convert to radians
+    }
+
+    function moveHandRotate(newPosition) {
+      targetHandRotationZ = newPosition * Math.PI / 180; // Convert to radians
+    }
+
+    function moveFingerLTranslate(newPosition) {
+      targetFingerLTranslationX = newPosition / 100; // Convert to units
+    }
+
+    function moveFingerRTranslate(newPosition) {
+      targetFingerRTranslationX = newPosition / 100; // Convert to units
+    }
+
+    function executeCommand() {
+      const command = document.getElementById('commandInput').value.trim().toUpperCase();
+      const joint = command.charAt(0);
+      const value = parseFloat(command.slice(1));
+
+      switch (joint) {
+        case 'A':
+          //moveBasePan(value);  //wrong
+	 moveNeckTwist(value);
+          break;
+        case 'B':
+         moveHeadTilt(value);
+          break;
+        case 'C':
+     	 moveArmTranslate(value);
+          break;
+        case 'D':
+         moveWristTilt(value);
+          break;
+        case 'E':
+          moveHandRotate(value);
+          break;
+        case 'F':
+          
+          break;
+        case 'G':
+          moveFingerLTranslate(value);
+          break;
+        case 'H':
+          moveFingerRTranslate(value);
+          break;
+        default:
+          alert('Invalid command');
+      }
+    }
+
+    function fillAndSubmit(command) {
+      document.getElementById('commandInput').value = command;
+      executeCommand();
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      if (base) base.rotation.z = updateRotation(base.rotation.z, targetBaseRotationZ);
+      if (neck) neck.rotation.y = updateRotation(neck.rotation.y, targetNeckRotation);
+      if (head) head.rotation.x = updateRotation(head.rotation.x, targetHeadRotationX);
+      if (arm) arm.position.z = updateTranslation(arm.position.z, targetArmTranslationY);
+      if (wrist) wrist.rotation.x = updateRotation(wrist.rotation.x, targetWristRotationX);
+      if (hand) hand.rotation.z = updateRotation(hand.rotation.z, targetHandRotationZ);
+      if (fingerL) fingerL.position.x = updateTranslation(fingerL.position.x, targetFingerLTranslationX);
+      if (fingerR) fingerR.position.x = updateTranslation(fingerR.position.x, targetFingerRTranslationX);
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>
